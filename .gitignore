@@ -217,4 +217,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-data/
+!data/Test_NoisyLR/output
+data/train
+data/Test_NoisyLR/*
