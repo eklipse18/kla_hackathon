@@ -209,9 +209,10 @@ This gave us results like the following:
 
 ![1787068883964](image/README/1787068883964.png)
 
-> LPIPS score between restored and ground truth: 0.193712317943573
-> SSIM: 9.1552734375e-05
-> Time taken for restoration: 0.046082777976989746 seconds
+> LPIPS score between restored and ground truth: 0.1397971659898758
+> SSIM: 2.4497509002685547e-05
+> PSNR:  30.86580753326416
+> Time taken for restoration: 0.02075672149658203 seconds
 
 These ~12000 images were then saved as input data for training the upscaler, into `data/train/restormer_out`
 
