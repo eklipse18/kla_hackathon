@@ -219,9 +219,7 @@ These ~12000 images were then saved as input data for training the upscaler, int
 
 For the upscaler, we eventually decided to go with `ESPCN` due to its extremely small architecture giving us insanely fast inference times with a decently scoring output. You can see our comparision attempts in `comapre_upscalers.ipynb`
 
-![1787069718343](image/README/1787069718343.png)
-
-Originally, when trained we got images with heavy checkerboard patterning, so we added an `AntiAliasBlock` to help counterract that.
+![1787074118961](image/README/1787074118961.png)Originally, when trained we got images with heavy checkerboard patterning, so we added an `AntiAliasBlock` to help counterract that.
 
 ```Python
 class AntiAliasBlock(nn.Module): 
@@ -364,15 +362,12 @@ We chose this because just using `Charbonnier + LPIPS/SSIM` was giving us boxy e
 
 ### Final inference
 
-![1787070137512](image/README/1787070137512.png)
+![1787073897363](image/README/1787073897363.png)
 
-> Charbonnier Loss 0.027009114623069763
-> FFL Loss 0.005868382510612719
-> Sobel Edge gated LPIPS Loss 0.0239110067486763
-> Time taken for upscaling: 0.00036263465881347656 seconds
-> PSNR:  27.03090190887451
-> SSIM:  0.1718515157699585
-> LPIPS:  0.19146636128425598
+> Total time taken: 0.045073747634887695 seconds
+> PSNR: 26.69
+> SSIM: 0.6783
+> LPIPS: 0.0937
 
 ### Putting it all together
 
