@@ -102,8 +102,8 @@ def run_batch(image_path: Annotated[str, typer.Argument()], save_path: Annotated
         input_tensor = torch.cat(_input_tensor, dim=0)
         denoised_images = Restormer_model(input_tensor)
         upscaled_images = ESPCN_model(denoised_images).detach().cpu().numpy()
-        for j in range(i, i+batch_size):
-            np.save(_save_path/f'{j}.npy', upscaled_images[j - i])
+        for j in range(batch_size):
+            np.save(_save_path/f'{batch_files[j].stem}.npy', upscaled_images[j])
 
 if __name__ == "__main__":
     typer.run(run_batch)
