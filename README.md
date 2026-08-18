@@ -209,7 +209,7 @@ This gave us results like the following:
 
 ![1787068883964](image/README/1787068883964.png)
 
-> LPIPS score between restored and ground truth: 0.293712317943573
+> LPIPS score between restored and ground truth: 0.193712317943573
 > SSIM: 9.1552734375e-05
 > Time taken for restoration: 0.046082777976989746 seconds
 
@@ -364,10 +364,10 @@ We chose this because just using `Charbonnier + LPIPS/SSIM` was giving us boxy e
 
 ![1787073897363](image/README/1787073897363.png)
 
-> Total time taken: 0.045073747634887695 seconds
-> PSNR: 26.69
-> SSIM: 0.6783
-> LPIPS: 0.0937
+> Total time taken: 0.01964426040649414 seconds
+> PSNR:  35.89777600620434
+> SSIM:  0.956510977587223
+> LPIPS: 0.13843943998466
 
 ### Putting it all together
 
