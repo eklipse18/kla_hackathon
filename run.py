@@ -77,7 +77,7 @@ def load_single_tensor(file_path: Path) -> torch.Tensor:
         ])
         return transform(image).unsqueeze(0)
 
-def run_batch(image_path: Annotated[str, typer.Argument()], save_path: Annotated[str, typer.Argument()] = "", batch_size: Annotated[int, typer.Option("--batch-size")] = 2) -> None:
+def run_batch(image_path: Annotated[str, typer.Argument()], save_path: Annotated[str, typer.Argument()] = "", batch_size: Annotated[int, typer.Option("--batch-size")] = 1) -> None:
     """
     Run inference on an image directory using the trained model.
 
