@@ -4,28 +4,6 @@ import torch.nn.functional as F
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "xpu" if torch.xpu.is_available() else "cpu")
 
-class ESPCN(nn.Module):
-    def __init__(self, scale_factor, num_channels=1):
-        super(ESPCN, self).__init__()
-        
-        # Feature extraction
-        self.conv1 = nn.Conv2d(num_channels, 64, kernel_size=5, padding=2)
-        self.tanh1 = nn.Tanh()
-        
-        # Non-linear mapping
-        self.conv2 = nn.Conv2d(64, 32, kernel_size=3, padding=1)
-        self.tanh2 = nn.Tanh()
-        
-        # Sub-pixel convolution layer
-        self.conv3 = nn.Conv2d(32, num_channels * (scale_factor ** 2), kernel_size=3, padding=1)
-        self.pixel_shuffle = nn.PixelShuffle(scale_factor)
-
-    def forward(self, x):
-        x = self.tanh1(self.conv1(x))
-        x = self.tanh2(self.conv2(x))
-        x = self.pixel_shuffle(self.conv3(x))
-        return x
-
 class MDTA(nn.Module):
     def __init__(self, channels, num_heads):
         super(MDTA, self).__init__()
@@ -146,22 +124,6 @@ class Restormer(nn.Module):
         fr = self.refinement(fd)
         out = self.output(fr) + x
         return out
-
-def build_espcn(scale_factor: int = 2, num_channels: int = 1) -> ESPCN:
-    """
-    Build the ESPCN model.
-
-    Args:
-        scale_factor (int): The upscaling factor.
-        num_channels (int): Number of input channels.
-
-    Returns:
-        ESPCN: The ESPCN model.
-    """
-    model = ESPCN(scale_factor=scale_factor, num_channels=num_channels)
-    model.load_state_dict(torch.load("models/espcn_model.pth", map_location=DEVICE))
-    print("ESPCN model loaded successfully.")
-    return model.to(DEVICE)
 
 def build_restormer(num_blocks=[4, 6, 6, 8], num_heads=[1, 2, 4, 8], channels=[48, 96, 192, 384],
                    num_refinement=4, expansion_factor=2.66) -> Restormer:

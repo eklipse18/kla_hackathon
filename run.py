@@ -7,8 +7,6 @@ from inference import build_espcn, build_restormer
 import matplotlib.pyplot as plt
 import numpy as np
 
-app = typer.Typer()
-
 def process_single_path(image_path: str) -> torch.Tensor:
     """
     Process the input image and convert it to a tensor.
@@ -79,8 +77,7 @@ def load_single_tensor(file_path: Path) -> torch.Tensor:
         ])
         return transform(image).unsqueeze(0)
 
-@app.command("batch")
-def run_batch(image_path: Annotated[str, typer.Argument()], save_path: Annotated[str, typer.Option("--save")] = "", batch_size: Annotated[int, typer.Option("--batch-size")] = 2) -> None:
+def run_batch(image_path: Annotated[str, typer.Argument()], save_path: Annotated[str, typer.Argument()] = "", batch_size: Annotated[int, typer.Option("--batch-size")] = 2) -> None:
     """
     Run inference on an image directory using the trained model.
 
@@ -108,62 +105,5 @@ def run_batch(image_path: Annotated[str, typer.Argument()], save_path: Annotated
         for j in range(i, i+batch_size):
             np.save(_save_path/f'{j}.npy', upscaled_images[j - i])
 
-@app.command("run")
-def run_single(image_path: Annotated[str, typer.Argument()], save_path: Annotated[str, typer.Option("--save")] = "") -> None:
-    """Run inference on a single image
-
-    Args:
-        image_path (Annotated[str, typer.Argument): Path to image
-        save_path (Annotated[str, typer.Option, optional): Path to save image to. Does not save if not provided
-    """
-    input_tensor = process_single_path(image_path)
-    ESPCN_model = build_espcn()
-    Restormer_model = build_restormer()
-    DEVICE = next(ESPCN_model.parameters()).device  # Assuming both models are on the same device
-
-    input_tensor = input_tensor.to(DEVICE)
-    denoised_image = Restormer_model(input_tensor)
-    upscaled_image = ESPCN_model(denoised_image)
-
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    fig.suptitle("Inference Result", fontsize=16)
-    axes[0].imshow(denoised_image.squeeze().detach().cpu().numpy(), cmap="gray")
-    axes[0].axis("off")
-    axes[0].set_title("Denoised Image", fontsize=14)
-
-    # print metrics psnr, ssim and lpips of denoised image with input image
-
-    from skimage.metrics import peak_signal_noise_ratio as psnr
-    from skimage.metrics import structural_similarity as ssim
-
-    psnr_denoise = psnr(input_tensor.squeeze().detach().cpu().numpy(), denoised_image.squeeze().detach().cpu().numpy(), data_range=1)
-    ssim_denoise = ssim(input_tensor.squeeze().detach().cpu().numpy(), denoised_image.squeeze().detach().cpu().numpy(), data_range=1)
-    axes[0].text(0.5, -0.1, f"PSNR: {psnr_denoise:.2f}\nSSIM: {ssim_denoise:.4f}", fontsize=12, ha='center', transform=axes[0].transAxes)
-
-
-    axes[1].imshow(upscaled_image.squeeze().detach().cpu().numpy(), cmap="gray")
-    axes[1].axis("off")
-    axes[1].set_title("Denoised + Upscaled Image", fontsize=14)
-
-    psnr_upscale = psnr(input_tensor.squeeze().detach().cpu().numpy(), upscaled_image.squeeze().detach().cpu().numpy())
-    ssim_upscale = ssim(input_tensor.squeeze().detach().cpu().numpy(), upscaled_image.squeeze().detach().cpu().numpy())
-    axes[1].text(0.5, -0.1, f"PSNR: {psnr_upscale:.2f}\nSSIM: {ssim_upscale:.4f}", fontsize=12, ha='center', transform=axes[1].transAxes)
-
-
-    axes[2].imshow(input_tensor.squeeze().detach().cpu().numpy(), cmap="gray")
-    axes[2].axis("off")
-    axes[2].set_title("Input Image", fontsize=14)
-
-
-    plt.tight_layout()
-    plt.show()
-
-    if save_path:
-        _save_path = Path(save_path)
-        _save_path.parent.mkdir(parents=True, exist_ok=True)  # Create parent directories if they don't exist
-        plt.imsave(_save_path, upscaled_image.squeeze().detach().cpu().numpy(), cmap="gray")
-        print(f"Upscaled image saved to: {_save_path}")
-
-
 if __name__ == "__main__":
-    app()
+    typer.run(run_batch)
