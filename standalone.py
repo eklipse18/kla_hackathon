@@ -131,29 +131,14 @@ def run_single(image_path: Annotated[str, typer.Argument()], save_path: Annotate
     axes[0].axis("off")
     axes[0].set_title("Denoised Image", fontsize=14)
 
-    # print metrics psnr, ssim and lpips of denoised image with input image
-
-    from skimage.metrics import peak_signal_noise_ratio as psnr
-    from skimage.metrics import structural_similarity as ssim
-
-    psnr_denoise = psnr(input_tensor.squeeze().detach().cpu().numpy(), denoised_image.squeeze().detach().cpu().numpy(), data_range=1)
-    ssim_denoise = ssim(input_tensor.squeeze().detach().cpu().numpy(), denoised_image.squeeze().detach().cpu().numpy(), data_range=1)
-    axes[0].text(0.5, -0.1, f"PSNR: {psnr_denoise:.2f}\nSSIM: {ssim_denoise:.4f}", fontsize=12, ha='center', transform=axes[0].transAxes)
-
 
     axes[1].imshow(upscaled_image.squeeze().detach().cpu().numpy(), cmap="gray")
     axes[1].axis("off")
     axes[1].set_title("Denoised + Upscaled Image", fontsize=14)
 
-    psnr_upscale = psnr(input_tensor.squeeze().detach().cpu().numpy(), upscaled_image.squeeze().detach().cpu().numpy())
-    ssim_upscale = ssim(input_tensor.squeeze().detach().cpu().numpy(), upscaled_image.squeeze().detach().cpu().numpy())
-    axes[1].text(0.5, -0.1, f"PSNR: {psnr_upscale:.2f}\nSSIM: {ssim_upscale:.4f}", fontsize=12, ha='center', transform=axes[1].transAxes)
-
-
     axes[2].imshow(input_tensor.squeeze().detach().cpu().numpy(), cmap="gray")
     axes[2].axis("off")
     axes[2].set_title("Input Image", fontsize=14)
-
 
     plt.tight_layout()
     plt.show()
