@@ -211,7 +211,7 @@ This gave us results like the following:
 
 > LPIPS score between restored and ground truth: 0.293712317943573
 > SSIM: 9.1552734375e-05
-> Time taken for restoration: 0.26082777976989746 seconds
+> Time taken for restoration: 0.046082777976989746 seconds
 
 These ~12000 images were then saved as input data for training the upscaler, into `data/train/restormer_out`
 
