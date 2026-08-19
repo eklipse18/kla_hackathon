@@ -76,7 +76,7 @@ We went with taking the ground truth images (GT) and performing operations such 
 
 # Training (Denoiser)
 
-We started off by first training Restormer from scratch. It has a fairly simple architecture, and the small model architecture will help keep our inference times low:
+We started off by first training Restormer from scratch. It has a fairly simple architecture, and the small model architecture will help keep our inference times incredibly low:
 
 ```Python
 class MDTA(nn.Module):
@@ -201,7 +201,7 @@ class Restormer(nn.Module):
         return out
 ```
 
-This was trainiend with `LPIPS + Charbonnier` Loss.
+This was trained with `LPIPS + Charbonnier` Loss.
 
 This gave us results like the following:
 
@@ -209,10 +209,12 @@ This gave us results like the following:
 
 ![1787068883964](image/README/1787068883964.png)
 
+```text
 > LPIPS score between restored and ground truth: 0.1397971659898758
 > SSIM: 2.4497509002685547e-05
 > PSNR:  30.86580753326416
 > Time taken for restoration: 0.02075672149658203 seconds
+```
 
 These ~12000 images were then saved as input data for training the upscaler, into `data/train/restormer_out`
 
@@ -365,10 +367,12 @@ We chose this because just using `Charbonnier + LPIPS/SSIM` was giving us boxy e
 
 ![1787073897363](image/README/1787073897363.png)
 
+```text
 > Total time taken: 0.01964426040649414 seconds
 > PSNR:  35.89777600620434
 > SSIM:  0.956510977587223
 > LPIPS: 0.13843943998466
+```
 
 ### Putting it all together
 
