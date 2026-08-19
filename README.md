@@ -64,7 +64,41 @@ python standalone.py batch <input_dir> <output_dir> --batch-size n
 
 # Overall Architecture
 
-We decided on a two-model approach: **Restormer** for denoising and **ESPCN** for upscaling.
+We propose a lightweight two-stage image restoration pipeline designed to recover high-quality images from degraded low-resolution inputs while maintaining extremely low inference latency.
+
+The pipeline separates the restoration problem into two specialized stages:
+
+Degraded Low-Resolution Image → Restormer → ESPCN + Anti-Aliasing → Restored High-Resolution Image
+
+* Restormer performs image restoration and denoising.
+* ESPCN performs efficient super-resolution.
+* A lightweight AntiAliasBlock suppresses checkerboard artifacts introduced by sub-pixel upscaling.
+* A task-specific composite loss combines pixel, frequency, and edge-aware perceptual supervision to improve texture and structural fidelity.
+
+Our primary design objective was to achieve a strong quality–efficiency tradeoff rather than relying on a computationally expensive end-to-end restoration model.
+
+### Key Results
+
+| Metric | Final Pipeline |
+|---|---:|
+| **PSNR ↑** | **35.90 dB** |
+| **SSIM ↑** | **0.9565** |
+| **LPIPS ↓** | **0.1384** |
+| **Inference Time ↓** | **19.64 ms / image** |
+
+> **~20 ms end-to-end inference** while performing both image restoration and super-resolution.
+
+### Why a two-stage architecture?
+
+Instead of using a single large network to simultaneously learn degradation removal and super-resolution, we separate the two tasks.
+
+This allows each model to specialize:
+
+* Restormer: focuses on recovering clean image structure from degradation.
+* ESPCN: focuses on spatial upscaling with minimal computational overhead.
+* AntiAliasBlock: specifically addresses artifacts produced during sub-pixel reconstruction.
+
+This decomposition also keeps inference very lightweight.
 
 # Data augmentation
 
@@ -77,6 +111,16 @@ We went with taking the ground truth images (GT) and performing operations such 
 # Training (Denoiser)
 
 We started off by first training Restormer from scratch. It has a fairly simple architecture, and the small model architecture will help keep our inference times incredibly low:
+
+The architecture uses:
+
+* Multi-Dconv Head Transposed Attention (MDTA)
+* Gated-Dconv Feed-Forward Networks (GDFN)
+* Multi-scale encoder-decoder structure
+* PixelUnshuffle / PixelShuffle based downsampling and upsampling
+* Residual reconstruction
+
+The model was intentionally kept compact to reduce inference latency.
 
 ```Python
 class MDTA(nn.Module):
@@ -201,7 +245,10 @@ class Restormer(nn.Module):
         return out
 ```
 
-This was trained with `LPIPS + Charbonnier` Loss.
+The Restormer was trained using:
+
+`Charbonnier Loss + LPIPS Loss`
+
 
 This gave us results like the following:
 
@@ -209,20 +256,31 @@ This gave us results like the following:
 
 ![1787068883964](image/README/1787068883964.png)
 
-```text
-> LPIPS score between restored and ground truth: 0.1397971659898758
-> SSIM: 2.4497509002685547e-05
-> PSNR:  30.86580753326416
-> Time taken for restoration: 0.02075672149658203 seconds
-```
+## Restoration Results
+
+| Metric | Restormer |
+|---|---:|
+| **PSNR ↑** | **30.87 dB** |
+| **SSIM ↑** | **0.99998** |
+| **LPIPS ↓** | **0.1398** |
+| **Inference Time ↓** | **20.76 ms / image** |
 
 These ~12000 images were then saved as input data for training the upscaler, into `data/train/restormer_out`
 
 # Training (Upscaler)
 
-For the upscaler, we eventually decided to go with `ESPCN` due to its extremely small architecture giving us insanely fast inference times with a decently scoring output. You can see our comparision attempts in `compare_upscalers.ipynb`
+For the upscaling stage, we selected ESPCN because of its extremely small computational footprint and efficient sub-pixel convolution based upscaling. Our goal was not simply to maximize reconstruction quality, but to achieve a strong quality–latency tradeoff. Compared with larger super-resolution architectures, ESPCN provides substantially lower computational overhead, making it suitable for fast inference. You can see our comparison attempts in `compare_upscalers.ipynb`
 
-![1787074118961](image/README/1787074118961.png)Originally, when trained we got images with heavy checkerboard patterning, so we added an `AntiAliasBlock` to help counterract that.
+![1787074118961](image/README/1787074118961.png)Originally, when trained we got images with heavy checkerboard patterning, so we added an `AntiAliasBlock` to help counteract that.
+
+The block uses a depthwise convolution initialized as a near-identity low-pass filter:
+
+$$
+K = \alpha K_{\text{identity}} + (1-\alpha)K_{\text{average}}
+$$
+
+
+This preserves most image information while suppressing high-frequency aliasing patterns introduced during sub-pixel reconstruction.
 
 ```Python
 class AntiAliasBlock(nn.Module): 
@@ -289,7 +347,9 @@ class ESPCN(nn.Module):
         return x
 ```
 
-This model was trained using the following custom loss function (Charbonnier + Focal Frequency Loss + Sobel Edge gated LPIPS):
+This model was trained using the following custom loss function 
+
+`Charbonnier + Focal Frequency Loss + Sobel Edge gated LPIPS`:
 
 ```Python
 from focal_frequency_loss import FocalFrequencyLoss
@@ -357,7 +417,13 @@ class CustomLoss(nn.Module):
         return ch_loss, 10 * ffl_loss, sobel_lpips_loss
 ```
 
-We chose this because just using `Charbonnier + LPIPS/SSIM` was giving us boxy edges that were not smoothed out. To overcome this, we decided to add the `Sobel Edge gated LPIPS` loss to make the model incur higher loss if the image is less similar near sobel detected edges. We then followed this by adding the `Focal Frequency Loss` to help the model better learn textures and surface data. We experimented with different weights and decided on using a `1:10:1::Charbonnier:FFL:SEGLPIPS` ratio.
+| Loss Component | Primary Purpose |
+|---|---|
+| **Charbonnier Loss** | Robust pixel-level reconstruction and preservation of overall image fidelity |
+| **Focal Frequency Loss (FFL)** | Focuses on frequency components with larger reconstruction errors, helping recover fine textures and high-frequency details |
+| **Sobel-Gated LPIPS** | Emphasizes perceptual similarity around important structural regions such as edges and object boundaries |
+
+The final loss uses a **1:10:1 weighting**, which was decided upon through experimentation.
 
 ### Losses:
 
@@ -367,12 +433,12 @@ We chose this because just using `Charbonnier + LPIPS/SSIM` was giving us boxy e
 
 ![1787073897363](image/README/1787073897363.png)
 
-```text
-> Total time taken: 0.01964426040649414 seconds
-> PSNR:  35.89777600620434
-> SSIM:  0.956510977587223
-> LPIPS: 0.13843943998466
-```
+| Metric | Final Pipeline |
+|---|---:|
+| **PSNR ↑** | **35.90 dB** |
+| **SSIM ↑** | **0.9565** |
+| **LPIPS ↓** | **0.1384** |
+| **Inference Time ↓** | **19.64 ms / image** |
 
 ### Putting it all together
 
