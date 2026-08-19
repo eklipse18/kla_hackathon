@@ -218,7 +218,7 @@ These ~12000 images were then saved as input data for training the upscaler, int
 
 # Training (Upscaler)
 
-For the upscaler, we eventually decided to go with `ESPCN` due to its extremely small architecture giving us insanely fast inference times with a decently scoring output. You can see our comparision attempts in `comapre_upscalers.ipynb`
+For the upscaler, we eventually decided to go with `ESPCN` due to its extremely small architecture giving us insanely fast inference times with a decently scoring output. You can see our comparision attempts in `compare_upscalers.ipynb`
 
 ![1787074118961](image/README/1787074118961.png)Originally, when trained we got images with heavy checkerboard patterning, so we added an `AntiAliasBlock` to help counterract that.
 
