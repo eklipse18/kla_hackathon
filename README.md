@@ -81,10 +81,10 @@ Our primary design objective was to achieve a strong quality–efficiency tradeo
 
 | Metric | Final Pipeline |
 |---|---:|
-| **PSNR ↑** | **35.90 dB** |
-| **SSIM ↑** | **0.9565** |
-| **LPIPS ↓** | **0.1384** |
-| **Inference Time ↓** | **19.64 ms / image** |
+| **PSNR ↑** | **27.59 dB** |
+| **SSIM ↑** | **0.7493** |
+| **LPIPS ↓** | **0.1509** |
+| **Inference Time ↓** | **19.70 ms / image** |
 
 > **~20 ms end-to-end inference** while performing both image restoration and super-resolution.
 
@@ -260,10 +260,10 @@ This gave us results like the following:
 
 | Metric | Restormer |
 |---|---:|
-| **PSNR ↑** | **30.87 dB** |
-| **SSIM ↑** | **0.99998** |
-| **LPIPS ↓** | **0.1398** |
-| **Inference Time ↓** | **20.76 ms / image** |
+| **PSNR ↑** | **27.67 dB** |
+| **SSIM ↑** | **0.99992** |
+| **LPIPS ↓** | **0.2038** |
+| **Inference Time ↓** | **14.77 ms / image** |
 
 These ~12000 images were then saved as input data for training the upscaler, into `data/train/restormer_out`
 
